@@ -1,0 +1,102 @@
+```sql
+create table country_test(
+country_id number primary key,
+country_name varchar2(100) not null)
+;
+desc country_test;
+```
+
+2-2
+
+#4
+
+```sql
+select *
+from locations
+where state_province is null
+or street_address is null 
+or postal_code is null 
+or country_id is null ;
+
+```
+
+#5
+
+```sql
+select * from locations
+where location_id BETWEEN 2000 AND 3000;
+```
+
+#6
+
+```sql
+select * from employees where first_name = 'David' and salary >=6000;
+select * from departments where department_id = 80;
+select city from locations where location_id = 2500;
+```
+
+2-3
+
+#1.
+
+```sql
+SELECT * from employees
+WHERE manager_id IS NULL;
+```
+
+#2.
+
+```sql
+SELECT salary, commission_pct,
+case when commission_pct IS NULL THEN salary
+    ELSE salary+(salary*commission_pct)
+    END commission_pct_wow
+FROM employees;
+```
+
+#3.
+
+```sql
+0건
+```
+
+#4.
+
+```sql
+SELECT * 
+FROM locations
+WHERE city LIKE 'S%'
+Order by city desc;
+```
+
+#5.
+
+```sql
+select postal_code||'-'||street_address||'-'||city||'-'||state_province||'-'||country_id 주소
+from locations
+Where country_id = 'US';
+
+--근데 값이 ppt랑 왜 달라...?
+--us 값 찾았을 때 그 자체가 다른디?
+```
+
+#6.
+
+```sql
+select * from locations
+where country_id = 'UK'
+and postal_code IS NOT NULL;
+
+--정렬을 어떻게 하지..?
+```
+
+#7.
+
+```sql
+i have no idea.
+뭘해도 오류가 나는..
+
+update locations set postal_code = '99999' where postal_code is null;
+select postal_code ||' - '|| street_address ||' - '|| city ||' - '|| state_province ||' - '|| country_id as 주소
+from locations where country_id = 'UK';
+```
