@@ -1,0 +1,230 @@
+1. 함수란? 
+
+    자주 사용되는, 연산(계산)을 정의해놓은 데이터베이스 객체 (재사용 목적)
+
+    - 오라클에서는 이런 함수들을 제공하고 있는데 이들을 SQL 함수 혹은 빌트인 함수라고 한다.
+2. 구분
+
+    1) 문자형 : 매개변수, 즉 피연산자가 문자형인 함수. 반환 결과는 문자형 혹은 숫자형
+
+    - CONCAT == ||
+
+    ```sql
+    SELECT CONCAT('A','B') FROM DUAL;
+
+    >AB
+    ```
+
+    - LOWER (chr) : 소문자 변환
+    - UPPER(chr) : 대문자 변환
+    - INITCAP(chr) : chr의 첫 번쨰 문자를 대문자로 변환
+    - LPAD(expr1,n,expr2) ↔ RPAD(expr1 , n , expr2) : 추가
+
+    ```sql
+    SELECT LPAD ('SQL', 5 , '*') FROM DUAL;
+    >**SQL
+    SELECT RPAD ('SQL', 5 , '*') FROM DUAL; 
+    >SQL**
+    ```
+
+    - LTRIM (expr1, expr2) ↔ RTRIM (expr1, expr2) : 제거
+    - SUBSTR(chr,n1,n2)  **
+
+    ```sql
+    --3번째부터 2개 세기.
+    SELECT SUBSTR('ABCDEFG',3,2) FROM DUAL; 
+    >CD
+
+    --0을 넣으면 1번째 부터 셈
+    SELECT SUBSTR('ABCDEFG',0,2) FROM DUAL;
+    >AB
+
+    --음수값은 chr 오른쪽 끝부터 셈
+    SELECT SUBSTR('ABCDEFG',-1,1) FROM DUAL;
+    >G
+    SELECT SUBSTR('ABCDEFG',-2,2) FROM DUAL;
+    >FG
+
+    --n2 생략하면 끝까지 반환
+    SELECT SUBSTR('ABCDEFG',-3) FROM DUAL;
+    >EFG
+    ```
+
+    - INSTR (chr1,chr2,n1,n2) **
+
+    ```sql
+    --2번째부터 세서 2번째 A를 찾아라
+    SELECT INSTR ('ABABAB','A',2,2) FROM DUAL;
+    >5
+
+    n1, n2 생략시 1. 
+    ```
+
+    - TRIM(chr) : 양쪽 끝 공백 제거한 결과
+    - LENGTH(chr) : 문자의 글자수 반환 / LENGTHB(chr) : 바이트 수 반환
+    - REPLACE (chr, serch_str,rep_str) : 대체 **
+
+    ```sql
+    SELECT REPLACE('ABC','B','D') FROM DUAL;
+    >ADB
+    ```
+
+    2) 숫자형 : 매개변수, 즉 피연산자와 연산 결과가 모두 숫자인 함수
+
+    - ABS(n) : 절댓값
+
+    ```sql
+    SELECT ABS(-10) FROM DUAL ; 
+
+    >10
+    ```
+
+    - MOD (n1,n2) : 나머지
+
+    ```sql
+    SELECT MOD(17,3) FROM DUAL ;
+
+    >2
+    ```
+
+    - ROUND (n, i) : 소수점 i 자리까지 두고 반올림
+
+    ```sql
+    SELECT ROUND(3.545,2) FROM DUAL ;
+
+    >3.55
+    ```
+
+    - TRUNC (n1, n2) : n2  생략시 0 적용. 소수점 n2 자리까지 두고 버림.
+
+    ```sql
+    SELECT TRUNC(3.545,2) FROM DUAL ;
+
+    > 3.54
+    ```
+
+    3) 날짜형
+
+    - SYSDATE : 현재 일자와 시간을 반환
+    - ADD_MONTHS(date,n) : date 날짜에 n개월을 더한 날짜를 반환
+    - 날짜에 일 더하거나 빼기
+
+    ```sql
+    SELECT SYSDATE,
+    SYSDATE + 1 nextday,
+    SYSDATE - 1 previousday
+    FROM DUAL;
+    ```
+
+    - MONTHS_BETWEEN (date1, date2) : date1, date2 사이의 개월 수 반환 / date1>date2 이면 양수, 반대면 음수
+
+    ```sql
+    SELECT MONTHS_BETWEEN (SYSDATE+30, SYSDATE) FROM DUAL;
+    >1
+    ```
+
+    - NEXT_DAY(date, expr) : date 날짜를 기준으로 expr에 명시한 날짜 반환
+
+    ```sql
+    SELECT NEXT_DAY 
+    ( SYSDATE, ＇화요일' )
+    FROM DUAL;
+    >2020-11-24 10:10:10 (sysdate 기준 화요일)
+    *화요일 == 2
+    ```
+
+    - ROUND ( date, format ) : 반올림 / TRUNC ( date, format )
+
+    YYYY, MM, DD, HH, HH24, MI 등 사용 가능, 생략 시 DD
+    
+    1. 형변환 : 문자,숫자,날짜형 데이터 각각을 다른 데이터 형으로 변환
+
+    1) 묵시적
+
+    : 오라클이 자동으로 형변환
+
+    : 묵시적 형변환 기본 규칙
+
+    - 숫자형 문자와 숫자 비교 시, 문자를 숫자로 변환해 비교
+    - 날짜형 문자와 숫자 비교 시, 문자를 날짜로 변환해 비교
+
+    2) 명시적
+
+    : 형변환 함수를 사용해 사용자가 직접 형변환
+
+    : 가급적 명시적! (가독성이 좋음) 
+
+2. 형변환 함수
+- 문자 → 숫자 : TO_NUMBER ( char )
+- 숫자 → 문자 (format) : TO_CHAR ( n, number_format )
+
+    : 숫자인 n을 number_format에 맞게 문자로
+    변환, number_format은 생략 가능
+
+```sql
+SELECT 
+TO_CHAR( 12345,'99,999' )
+FROM DUAL;
+
+>'12,345'
+
+-- 9 : 한 자리 숫자를 나타내는데, 실제 숫자의 자리 수와 같거나 크게 명시해야 함 
+-- ex. TO_CHAR( 123456, ‘999,999’ ) : 123,456
+```
+
+- 날짜 → 문자 (format) : TO_CHAR ( date, date_format ) : date_format은 생략 가능
+
+```sql
+SELECT 
+TO_CHAR( SYSDATE,
+'YYYY-MM-DD HH24:MI:SS' )
+FROM DUAL;
+
+> '2020-11-23 10:52:01'
+```
+
+- 문자 → 날짜 (format) : TO_DATE ( char, date_format )
+
+```sql
+SELECT 
+TO_DATE( '2020-06-
+15 23:52:01', 'YYYY-MMDD
+HH24:MI:SS' )
+FROM DUAL;
+
+>2020-1123 23:52:01
+```
+
+- 날짜 변환 형식1
+- 날짜 변환 형식2
+
+3. NULL 처리 함수
+
+- NVL (expr1, expr2) : expr1 값이 NULL이면 expr2를 반환
+- NVL (expr1, expr2, expr3) : expr1 값이 NULL이면 expr3을,
+NULL이 아니면 expr2를 반환
+
+```sql
+NVL(NULL,'A') 
+>'A'
+```
+
+4. DECODE ( expr, val1, result1, val2, result2, …, default_value )
+
+: expr값이 value1이면 result1, value2와 같으면 result2를 반환
+
+: 일치하는 값이 없으면 default_value 반환
+
+: 이 경우 default_value 생략시 Null 반환
+
+: 요즘은 CASE 함수로 더 많이 씀. 
+
+5. 기타 함수
+
+- 집계함수
+
+    : SUM, MAX, MIN, AVG 등 : 4차시 강의에서 설명
+
+- 오라클에서 제공하는 기타 함수 : 분석 함수
+- 사용자 정의 함수 : PL/SQL을 사용해 직접 함수 생성 가능
+    
