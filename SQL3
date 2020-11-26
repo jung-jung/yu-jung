@@ -1,0 +1,99 @@
+1. 집계쿼리:  group by 절과 집계 함수를 사용한 쿼리 
+
+*주의 
+
+1)  group by 절에 기술한 컬럼, 표현식 이외의 항목은   select 절에 명시 불가 (집계 함수 제외)
+
+ 2. 집계 함수 : 여러 건의 데이터를 집계 연산한 결과를 반환하는 함수
+
+1)count( expr)  :  expr(컬럼을 포함한 표현식) 의 전체 개수 반환, 보통 * 사용( count 에서만 사용)
+
+2) max :  최댓값
+
+3) min : 최솟값
+
+4) sum
+
+5) AVG :  평균값
+
+6) VARIANCE : 분산
+
+7)  STDDEV :  표준편차
+
+- group by  절과 같이 쓰이면 : 절에 명시한 항목별 집계 값 계산
+- group by  절 없이 쓰이면, 조회되는 데이터 전체에 대한 집계 값 계산
+
+EX.
+
+- 기본 키 컬럼의 경우는 유일한 값만 들어 있기에  group by  절을 사용해 집계하는 의미가 없음
+- group by job_id  의 경우는   job_id 컬럼 기준으로 유일한 값들을 모아 집계 된다.
+- group by 절에는  select 절에 기술한 형태 그대로 기술하되, 별칭은 기술하지 않는다.
+
+```sql
+
+select to_char(hire_date, 'YYYY') hire_year
+from employees
+group by hire_date;
+
+--입사 일자별 집계 쿼리 
+```
+
+- 
+
+```sql
+select count(*)
+from employees;
+
+--employees 테이블의 전체 로우 건 수
+```
+
+```sql
+select to_char(hire_date, 'YYYY') hire_year, department_id, 
+count(*), sum(salary),  ROUND(AVG(salary),0)
+from employees
+where to_char(hire_date,'YYYY') > = '2004'
+group by to_char(hire_date, 'YYYY'),department_id
+order by 1,2
+
+-- 2004년 이후 입사 년도와 부서별 총 인원수와 급여 총액, 급여 평균
+
+```
+
+3.  Having  절 : 집계 쿼리에서 집계 함수 반환 값에 대한 조건을 걸 때 사용
+
+- 일반적인 조건 :  where  절
+- 집계 쿼리에 대한 추가 조건 절 :  having 절
+
+```sql
+select to_char(hire_date,'YYYY') Hire_year,
+deparment_id , count(*), sum(salary), round(AVG(salary),0)
+from employees
+--where round(avg(salary),0) >= 5000
+group by to_char(hire_date, 'YYYY'), department_id
+having round(avg(salary),0) >= 5000
+order by 1,2;
+```
+
+4. distinct : distinct  뒤에 명시한 표현식의 고유한 값을 조회 =  group by
+
+```sql
+select distinct to_char(hire_date, 'YYYY') hire_year, department_id
+from employees
+order by 1,2;
+```
+
+5. rollup :  부분 합
+
+```sql
+--각각의 값이 다 나오고 합친 값이 나온다.
+
+select substr(phone_number,1,3), job_id, sum(salary)
+from employees
+group by 
+rollup(substr(phone_number,1,3), job_id)
+order by 1,2;
+```
+
+6.  cube :  모든 가능한 조합에 대한 소계
+
+  cube(col1,col2...) :  표현식 수  n 개 : 2의  n 승계의 조합 :  col1. col2. col1 과  col2 에 대한 합계. 전체 합계
