@@ -1,0 +1,154 @@
+tidyr 패키지 
+  spread() – to wide
+  gather() – to log
+  시각화 하기 편함, 데이터 전처리, 가공에 많이 사용
+
+
+spread( )로 데이터를 여러 열로 나누기(long -> wide), 특정 변수를 
+  aggr %>% 
+  spread(업종, 통화건수) 
+ 업종별로 통화건수를 보고싶다!! 내가 원하는 view로
+
+Tip. 변수명 설정할 때 한글로 하면 변수가 밀리게 보임, 영어로 하는게 좋음
+
+
+replace_na( )로 결측값 처리하기
+  replace_na(list(변수1=값, 변수2=값, ...))
+  aggr_wide %>% replace_na(list(족발보쌈=999, 중국음식=0, 치킨=0))
+
+
+
+gather( )로 여러 열을 한 열 + 구분변수로 만들기(wide->long)
+  gather(데이터이름, 새기준변수이름, 새변수이름, 모을 변수들)
+  aggr_wide2 %>% gather(Category, Count, 족발보쌈, 중국음식, 피자, 치킨)
+  aggr_long = aggr_wide2 %>% gather(Category, Count, -(시군구:요일))
+aggr은 관측치가 12845개, aggr_long은 15788개가 나오는 데 이건 우리가 앞서 na값을 replace_na() 함수를 사용해서 0으로 해줘서 늘어남 -> na값 포함되어있던 @%@$
+
+
+drop_na() 
+  aggr_wide %>% drop_na(치킨, 피자) 
+ 이 변수에na값있으면 날려!!
+Tip. 무조건 날리진 않고 NA데이터가 현저히 적을 때 na를 날림 (1%미만일 때 <-강사님 기준)
+NA이라고 무조건 날려버리면 잘못된 결론이 도출될 수 있음.
+
+
+complete( )로 빠져있는 조합 채우기
+  ex) 3947 !=  4200 = 25(시군구)*24(시간대)*7(요일)
+현재 데이터는 3947개, 변수들의 모든 경우의 수로 따지면 4200개가 있어야하는데 비어있는 값을 채울 때 
+
+  aggr_wide2 %>% complete(시군구, 시간대, 요일, fill=list(족발보쌈=0, 중국음식=0, 치킨=0, 피자=0))
+fill= 옵션으로 빈값 채움
+
+
+substr() 문자 추출 후 변수명 변경
+기존 데이터에 ‘~’같은 문자가 있었는데 데이터를 작업할 때는 간단한 변수명이 좋음
+  substr(names(subway_2017)[6:25], 1, 2)
+첫 두글자만 선택 
+  paste0('H', substr(names(subway_2017)[6:25], 1, 2)) 
+앞에 'H'를 붙임
+  names(subway_2017)[6:25] <- paste0('H', substr(names(subway_2017)[6:25], 1, 2)) 
+변수이름 업데이트
+
+library(stringr)
+  string1 <- "This is a string"
+  string2 <- "If I want to include a 'quote' inside a string, I use single quotes"
+  string2 <- 'If I want to include a "quote" inside a string, I use single quotes'
+“” 큰 따움표 확인 중요!
+큰 따움표 안에 작은 따움표는 되지만 작은 따움표 안에 큰 따움표 사용은 X
+SQL에서 쿼리를 불러올 때 잘못 인식될 수 있음!
+
+x <- c("apple", "banana", "pear")
+  
+  str_detect(데이터, 패턴)
+  str_detect(x, "e") 
+e가 들어가 있냐 없냐! -> True & False 형으로 반환
+
+  str_count(데이터, 패턴)
+  str_count(x,"a")
+각 데이터에 a가 몇 개씩 들어가있냐!
+
+  str_which(데이터, 패턴)
+  str_which(x,"e")
+위치, 몇번째 데이터에 포함되어있냐!
+
+  str_locate(데이터, 패턴), 
+  str_locate(x,"a")
+텍스트 내에서의 어느 위치에 있는거야? -> 반환
+start는 각 데이터에 “a” 시작점 end에 값은 끝나는 지점,  
+a한개를 입력했기 때문에 위치랑 값이 동일하게 나옴!
+str_sub(데이터, 시작, 끝)
+  x <- c("Apple", "Banana", "Pear")
+  str_sub(x, 1, 3)
+
+  str_subset(데이터, 패턴)
+  str_subset(x,"r")
+x데이터에서 r이 포함되어있는걸 뽑아와!!
+subset(데이터, 추출값), subset자체가 무언갈 뽑아서 가져오는 느낌
+
+str_replace(데이터,찾는변수,바꿀변수)
+  str_replace_all("apple","p","l") 
+데이터를 날릴 때?(대체) 할 때 사용, ‘p’를 ‘l’로 바꿔줘!!
+
+  str_to_lower("STRING") 소문자로
+  str_to_upper("string") 대문자로
+  str_to_title("string") 첫 글자만
+SQL에서와 비슷한 함수
+
+
+타입변환
+  as.factor(x) : 주어진 객체 x를 팩터로 변환
+  as.numeric(x) : 주어진 객체 x를 숫자를 저장한 벡터로 변환
+  as.character(x) : 주어진 객체 x를 문자열을 저장한 벡터로 변환
+  as.matrix(x) : 주어진 객체 x를 행렬로 변환
+  as.data.frame(x) : 주어진 객체 x를 데이터 프레임으로 변환
+나중에 for으로 형태변환할 때 if(데이터형태=true) 면 ~~ 이런식으로도 사용 
+
+날짜데이터
+install.packages('lubridate')
+library(lubridate)
+
+  as.Date('2020-01-01') 
+  as.Date(2020-01-01)
+  as.Date(20200101)
+  as.Date('20200101')
+첫 번째식 빼고 다 오류
+
+  ymd('20200110')
+  mdy('January 10th 2020')
+  dmy('10-jan-2020')
+  ymd('820327')
+  ymd(820327)
+lubridate에 들어 있는 ymd() 함수를 통해서 보다 유연하게 사용가능
+
+  year(date_test)
+  month(date_test)
+  day(date_test)
+  week(date_test) 
+  wday(date_test)
+  wday(date_test,label = T)
+
+
+날짜로 각종 계산가능
+  date_test + days(100) 100일 후
+  date_test + months(100) 100개월 후
+  date_test + years(100) 100년 후
+is.na(df) : NA값 위치 출력, (TRUE & FALSE)
+table(is.na(df)) :  df에 있는 TRUE,FALSE 값 개수를 파악해줌
+
+
+na.omit(df)   
+모든 변수에 결측치 없는 데이터 추출, 무조건 na를 없애는건 좋은 방법은 아님! 
+
+
+df$score <- ifelse(is.na(df$score), 4, df$score)
+결측치 대체, 분석가에 판단에 따라 대체값 지정, 평균값, 중앙값, 최빈값 등등 
+
+
+iinstall.packages("zoo")
+library(zoo)
+
+na.locf0(c(NA, NA, "A", NA, "B"), fromLast = FALSE) 
+[1] NA  NA  "A" "A" "B“
+na.locf0(c(NA, NA, "A", NA, "B"), fromLast = TRUE)
+[1] "A" "A" "A" "B" "B"
+결측치 대체 
