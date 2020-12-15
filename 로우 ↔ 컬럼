@@ -1,0 +1,143 @@
+### 1. 로우 → 컬럼 (이런 경우 많음)
+
+1. case 사용 
+
+```sql
+
+SELECT years, gubun,
+	SUM(국어) as 국어, SUM(영어) as 영어 .....
+FROM (
+	SELECT years, gubun,
+	CASE WHEN subjects ='국어' then score 
+						ELSE 0 
+						END "국어",
+	CASE WHEN subjects ='영어' then score 
+						ELSE 0 
+						END "국어",
+  CASE WHEN subjects ='수학' then score 
+						ELSE 0 
+						END "수학",
+	CASE WHEN subjects ='과학' then score 
+						ELSE 0 
+						END "과학"
+	CASE WHEN subjects ='지리' then score 
+						ELSE 0 
+						END "지리"
+  CASE WHEN subjects ='독일어' then score 
+						ELSE 0 
+						END "독일어"
+FROM score_table a)
+group by years,gubun;
+
+```
+
+ 2. decode 이용
+
+```sql
+SELECT years, gubun,
+	SUM(국어) as 국어, SUM(영어) as 영어 .....
+FROM (
+	SELECT years, gubun,
+	DECODE(subjects,'국어',score,0) "국어"
+....
+FROM score_table a)
+group by years,gubun;
+```
+
+ 3. with 절
+
+```sql
+with mains as (select years, gubun,
+					case shen subjects = '국어' then score else 0 end "국어",
+...
+)
+select years, gubun,
+	SUM(국어) AS 국어, SUM(영어) AS 영어, SUM(수학) AS 수학 
+	...
+FROM mains
+group by years,gubun;
+```
+
+ 4.pivot 절 사용
+
+SELECT 컬럼
+FROM (조회할 데이터 SELECT문) OR 테이블
+PIVOT(집계함수(표현식) FOR 피벗대상컬럼 IN (행으로 올릴 열));
+
+```sql
+SELECT *
+	FROM (SELECT years,gubun, subjects, score
+				FROM score_table)
+	PIVOT(SUM(score) 
+				FOR subjects IN ('국어','영어','수학','과학','지리','독일어')
+			);
+```
+
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/8f50cef4-c6af-4027-919a-77bcfb825596/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/8f50cef4-c6af-4027-919a-77bcfb825596/Untitled.png)
+
+### 2. 컬럼 → 로우
+
+1. union all : 과목별 점수 테이블을 하나씩 다 합침
+
+```sql
+SELECT years, gubun, '국어' as subject, KOREAN(국어점수) as score
+	FROM score_col_table
+UNION ALL
+SELECT years, gubun, '영어' as subject, ENGLISH(영어점수) as score
+...
+```
+
+2. unpivot
+
+SELECT 컬럼
+FROM (조회할 데이터 SELECT문) OR 테이블
+UNPIVOT(가상 컬럼1) FOR (가상 컬럼2) IN (열으로 내릴 행컬럼));
+
+```sql
+select * 
+	from score_col_table
+UNPIVOT(score
+		for subjects IN (KOREAN as '국어', 
+										 ENGLISH as '영어',
+...)
+);
+```
+
+3. PL/SQL - table function
+
+```sql
+CREATE OR REPLACE FUNCTION fn_pipe_table_ex
+RETURN subject_nt
+PIPELINED
+IS
+vp_cur SYS_REFCURSOR;
+v_cur score_col_table%ROWTYPE;
+-- 반환할 컬렉션 변수 선언 (컬렉션 타입이므로 초기화를 한다)
+vnt_return subject_nt := subject_nt();
+BEGIN
+-- SYS_REFCURSOR 변수로 ch14_score_col_table 테이블을 선택해 커서를 오픈
+OPEN vp_cur FOR SELECT * FROM score_col_table ;
+-- 루프를 돌며 입력 매개변수 vp_cur를 v_cur로 패치
+LOOP
+FETCH vp_cur INTO v_cur;
+EXIT WHEN vp_cur%NOTFOUND;
+-- 컬렉션 타입이므로 EXTEND 메소드를 사용해 한 로우씩 신규 삽입
+vnt_return.EXTEND();
+-- 컬렉션 변수에 커서 변수의 값 할당
+vnt_return(vnt_return.LAST).YEARS := v_cur.YEARS;
+vnt_return(vnt_return.LAST).GUBUN := v_cur.GUBUN;
+vnt_return(vnt_return.LAST).SUBJECTS := '국어';
+vnt_return(vnt_return.LAST).SCORE := v_cur.KOREAN;
+PIPE ROW ( vnt_return(vnt_return.LAST)); -- 국어 반환
+vnt_return(vnt_return.LAST).SUBJECTS := '영어';
+vnt_return(vnt_return.LAST).SCORE := v_cur.ENGLISH;
+PIPE ROW ( vnt_return(vnt_return.LAST)); -- 영어 반환
+….
+….. 
+END LOOP;
+RETURN;
+END;
+
+SELECT *
+FROM TABLE ( fn_pipe_table_ex );
+```
