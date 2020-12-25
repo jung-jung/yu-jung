@@ -1,0 +1,154 @@
+## 연습문제 풀어보기
+library(openxlsx)
+install.packages('tidyverse')
+library('tidyverse')
+install.packages(lubridate)
+library(lubridate)
+library('tidyr')
+subway_2017 = read.xlsx('subway_1701_1709.xlsx')
+names(subway_2017)[6:25] <- paste0('H', substr(names(subway_2017)[6:25], 1, 2))
+head(subway_2017)
+#substr(x, start, stop)
+#substr(names(subway_2017)[6:25], 1, 2) : 각 시작 월 
+#paste0은 각각의 원소를 공백없이 이어주는 함수
+#paste0('H', substr(names(subway_2017)[6:25], 1, 2)): H를 공백없이 붙여주세요.
+
+#  subway_2017데이터를 활용해서 요약 시각화를 진행하여라
+##1. gather을 사용해서 H05부터 H24까지 시간, 고객 변수명으로 데이터 변형하시오
+#library('tidyr') 
+#  gather()는 와이드 포맷 데이터를 롱 포맷으로, spread()는 롱 포맷을 와이드 포맷으로 
+subway2 <- gather(subway_2017,"시간","고객",H05:H24)
+#시간에 따른 고객 key 값인 시간에 H05:H24 들어가야 한다. 
+head(subway2)
+#2. facet_grid를 사용해서 시간별 고객의 합을 월별로 따라로 그리시오 (1,2,3,4월)
+subway2 %>% 
+  mutate(month = month(날짜)) %>% #파생 열 생성 : mutate(dataframe, 새로운 column명 = 기존 columns을 조합한 수식)
+  filter(month %in% c(1,2,3,4)) %>%
+  group_by(month, 시간) %>% 
+  summarise(SUM = sum(고객)) %>% #월별, 시간별, 고객의 합 
+  arrange(desc(SUM)) %>%
+  ggplot(aes(x=시간,y=SUM,fill=factor(month))) + geom_bar(stat="identity") + facet_grid(~month)
+#우리는 부서별로 회사에서 한달동안 보내는 시간을 알고싶다.즉 제일 많이 일하는 부서를 알고싶다. 여기서 “stat=‘identity’”를 지정하는 이유를 알아야 합니다. geom_bar는 기본적으로 “stat=‘bin’”을 설정합니다. 이 뜻은 ’도수’를 기준으로 y축을 설정하겠다는 뜻입니다. “stat=‘identity’”를 설정하면 average_montly_hours의 ’값’을 이용하겠다는 뜻입니다.
+
+
+## month를 사용해서 월 변수를 만들어야 한다.
+
+
+
+### 프로젝트1
+
+#################################################
+######## 직접 분석해보기 (치킨 데이터) ##########
+#################################################
+
+# 내가 치킨집을 차릴경우 어떤 데이터를 보고 결정할 것인가?
+rm(list=ls())
+kk<-read.csv("chicken.csv",fileEncoding = "CP949")
+# mac인 경우 fileEncoding = "CP949"를 추가해야 한글이 깨지지 않습니다
+
+
+# ex) 단순히 전체 지역에서 통화건수를 기반으로 높은 지역을 찾기
+# ex) 가장 높은 연령대를 찾고 그 연령대의 전화가 많은 지역을 찾기
+
+head(kk)
+summary(kk)
+str(kk)
+
+# kk$요일 <- as.factor(kk$요일) factor로 변호
+head(kk,50)
+
+# scale_x_discrete(limits = c("월","화","수","목","금","토","일"))
+# scale_x_discrete (x축 순서 조정)
+
+
+
+# ex) 요일별 성별 비중을 확인해서 가장 높은 지역의 지역을 찾기
+
+# 시군구 상위 10 개수
+
+# 행수
+kk %>%
+  dplyr::count(시군구) %>%
+  top_n(10,n) %>%
+  arrange(desc(n))
+
+
+#통화건수의 합
+kk %>%
+  group_by(시군구) %>%
+  dplyr::summarise(sum=sum(통화건수)) %>%
+  top_n(10,sum) %>%
+  arrange(desc(sum))
+
+
+# 성별 연령별 통화가 가장 많은 곳은?
+
+kk %>%
+  group_by(성별,연령대) %>%
+  dplyr::summarise(sum=sum(통화건수)) %>%
+  data.frame()
+
+
+kk %>%
+  group_by(성별,연령대) %>%
+  dplyr::summarise(sum=sum(통화건수)) %>%
+  ggplot(aes(x=연령대,y=sum,fill=성별)) +
+  geom_bar(stat="identity",position = "dodge")
+
+
+# 성별 연령대별 지역 top
+# 30대 40대 대상
+
+target <- kk %>%
+  filter(연령대 %in% c("30대","40대")) %>%
+  group_by(성별,연령대,시군구) %>%
+  dplyr::summarise(sum = sum(통화건수),
+                   num = n()) %>%
+  ungroup() %>%
+  group_by(시군구) %>%
+  dplyr::summarise(sum1 = sum(sum),
+                   num1 = sum(num)) %>%
+  arrange(desc(sum1))
+
+# 그래도 만명은 넘는 지역 선별 후 시각화
+target %>%
+  filter(sum1 >= 10000) %>%
+  ggplot(aes(x=시군구,y=sum1,fill=시군구)) + geom_bar(stat="identity")
+
+
+# 요일별 성별 가장 많이 팔리는 시점 확인
+
+kk %>%
+  group_by(요일,성별) %>%
+  dplyr::summarise(sum = sum(통화건수)) %>%
+  arrange(desc(sum))
+
+kk %>%
+  group_by(요일,성별) %>%
+  dplyr::summarise(sum = sum(통화건수)) %>%
+  ggplot(aes(x=요일,y=sum,fill=성별)) +
+  geom_bar(stat="identity",position = "dodge")
+
+kk %>%
+  group_by(요일,성별) %>%
+  dplyr::summarise(sum = sum(통화건수)) %>%
+  ggplot(aes(x=요일,y=sum,fill=성별)) +
+  geom_bar(stat="identity",position = "dodge")+
+  scale_x_discrete(limits = c("월","화","수","목","금","토","일"))
+
+
+# 금토일 장사만 해야지!
+target2 <- kk %>%
+  filter(요일 %in% c("금","토","일")) %>%
+  group_by(요일,시군구) %>%
+  dplyr::summarise(sum = sum(통화건수),
+                   num = n()) %>%
+  ungroup() %>%
+  group_by(시군구) %>%
+  dplyr::summarise(sum1 = sum(sum),
+                   num1 = sum(num)) %>%
+  arrange(desc(sum1))
+
+target2 %>%
+  filter(sum1 >= 10000) %>%
+  ggplot(aes(x=시군구,y=sum1,fill=시군구)) + geom_bar(stat="identity")
