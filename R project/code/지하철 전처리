@@ -1,0 +1,40 @@
+library(dplyr)
+file_list = list.files()
+subway = read.csv(file_list[1])
+subway_test = subway %>% filter(사용월 %in% c(202009,202008,202007,202006,202005,202004,202003,202002,202001,201912,201911,201910,201909,201908,201907,201906,201905,201904,201903,201902,201901))
+View(subway_test)
+saveRDS(object = subway_test, file = "subway_t.rds")
+
+
+#나
+file_list = list.files()
+file_list
+a = read.csv(file_list[1])
+for(i in 1:20) {
+  a = rbind(a,read.csv(file_list[i+1]))
+}
+
+#창용님이라면
+file_list = list.files()
+file_list
+a = read.csv(file_list[1])
+for(i in 2:21) {
+  a = rbind(a,read.csv(file_list[i]))
+}
+
+
+#창용님 - 컬럼 찾아서 out 시키기
+for(i in 1:17){
+  data=read.csv(file_name[i])
+  if(sum(names(data) %in% c('버스정류장ARS번호'))>=1){
+    data=rename(data,c('버스정류장ID'='버스정류장ARS번호'))
+  } #data 이름에서 버스정류장ARS번호 를 찾아서, 그 합이 >=1 이라면, 버스정류장ID를 버스정류장 ARS번호로 바꿔라.
+  if(i %in% c(2,3,4,5,6,7,8,9)){
+    data=data[,-2]
+  } #2-9까지 data에 열 2개 뺀거를 넣어라 
+  test=rbind(test,data) #test와 data를 rbind 해라
+  cat(round((i/17*100),1),"% 완료/n") 
+}
+#print( )나 sprintf( )는 결과를 출력한 뒤 개행이 일어난다. 
+반면 cat( )은 주어진 입력을 출력하고 행을 바꾸지 않는다는 특징이 있다. 
+또한, cat( )에는 여러 인자를 나열해 쓰면 해당 인자들이 계속 연결되어 출력된다는 특징이 있다.
