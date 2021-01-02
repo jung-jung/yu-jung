@@ -6,17 +6,17 @@ setwd('C:/Users/ChangYong/Desktop/나노디그리/1.정규강의 학습자료/1�
 getwd()
 
 file_name <- list.files() #폴더 내 파일명 가져오기
-file_name_list <- str_sub(file_name,1,nchar(file_name)-4) #파일명에서 .csv 제거
+file_name_list <- str_sub(file_name,1,nchar(file_name)-4) #파일명에서 .csv 제거 #파일명 첫 번째 - .csv 전까지 
 info_class_list <- c('점포수'=1,'신생기업 생존율'=2,'연차별 생존율'=3,'평균영업기간'=4,
                      '개폐업수(률)'=5,'인구수'=6,'소득&가구수'=7,'임대시세'=8)
 
 modi_data_R <- function(x,y){
   test <- read.csv(x)
-  ifelse(y>5,col <- 2,col <- 2:3)
-  col_num <- as.data.frame(str_locate(names(test),str_sub(x,1,4)))
-  col_num <- rownames(col_num[!is.na(col_num$start),])
-  test <- test[,c(col,as.integer(col_num))]
-  col_num <- dim(test)[2]
+  ifelse(y>5,col <- 2,col <- 2:3) #y>5 참이면, col = 2, 거짓이면, col = 2:3
+  col_num <- as.data.frame(str_locate(names(test),str_sub(x,1,4))) #x의 첫 번째부터 4번째까지 / test의 컬럼명에서 겹치는 부분을 알려줘 / start, end
+  col_num <- rownames(col_num[!is.na(col_num$start),]) #start 값이 결측치가 아닌 행의 rownames 들을 col_num에 넣어.
+  test <- test[,c(col,as.integer(col_num))] #2 또는 2:3 부터 col_num 숫자로 바꾼 것까지의 열을 test에 넣어
+  col_num <- dim(test)[2] #dim은 dataframe의 길이를 관측할 때 사용하며, 행과 열의 개수를 모두 출력합니다. / 열의 갯수
   year_quarter <- names(test)[3]
   test$년도 <- str_sub(year_quarter,2,5)
   test$분기 <- str_sub(year_quarter,8,8)
